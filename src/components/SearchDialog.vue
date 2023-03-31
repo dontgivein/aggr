@@ -395,12 +395,12 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import {
-  stripStable,
   indexedProducts,
   indexProducts,
   getExchangeSymbols,
   ensureIndexedProducts,
-  parseMarket
+  parseMarket,
+  stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 
@@ -440,6 +440,7 @@ export default {
       'USDT',
       'UST',
       'USDC',
+      'USDD',
       'BUSD',
       'ETH',
       'BTC',
@@ -636,17 +637,19 @@ export default {
               this.queryFilter.test(product.local)
           )
           .reduce((groups, product) => {
-            let local = product.local
+            let localPair
 
-            if (this.searchTypes.mergeUsdt) {
-              local = stripStable(local)
+            if (product && this.searchTypes.mergeUsdt) {
+              localPair = product.base + stripStableQuote(product.quote)
+            } else {
+              localPair = product.base + product.quote
             }
 
-            if (!groups[local]) {
-              groups[local] = []
+            if (!groups[localPair]) {
+              groups[localPair] = []
             }
 
-            groups[local].push(product.id)
+            groups[localPair].push(product.id)
 
             return groups
           }, {})
@@ -692,10 +695,15 @@ export default {
           product => product.id === market
         )
 
-        let localPair = indexedProduct ? indexedProduct.local : market
+        let localPair = market
 
-        if (this.searchTypes.mergeUsdt) {
-          localPair = stripStable(localPair)
+        if (indexedProduct) {
+          if (indexedProduct && this.searchTypes.mergeUsdt) {
+            localPair =
+              indexedProduct.base + stripStableQuote(indexedProduct.quote)
+          } else {
+            localPair = indexedProduct.base + indexedProduct.quote
+          }
         }
 
         if (!groups[localPair]) {
@@ -1066,6 +1074,8 @@ export default {
 <style lang="scss" scoped>
 .search-dialog {
   ::v-deep .dialog__content {
+    width: 75vw;
+
     .dialog__body {
       padding: 0;
       flex-direction: row;

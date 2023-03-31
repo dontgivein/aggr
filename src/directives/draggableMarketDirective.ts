@@ -10,6 +10,10 @@ async function createDraggableMarketComponent(target) {
   isLoading = true
   const module = await import(`@/components/DraggableMarket.vue`)
 
+  if (!marketContext) {
+    return
+  }
+
   draggableMarketComponent = createComponent(module.default, {
     market: marketContext.market,
     target
@@ -129,14 +133,25 @@ function handleDragStart(event: MouseEvent | TouchEvent) {
 
 export default {
   bind(el) {
+    const touchEvents = isTouchSupported()
+
+    if (touchEvents && window.innerWidth < 768) {
+      return
+    }
+
     el.addEventListener(
-      isTouchSupported() ? 'touchstart' : 'mousedown',
+      touchEvents ? 'touchstart' : 'mousedown',
       handleDragStart
     )
   },
 
   unbind(el) {
     const touchEvents = isTouchSupported()
+
+    if (touchEvents && window.innerWidth < 768) {
+      return
+    }
+
     el.removeEventListener(
       touchEvents ? 'touchstart' : 'mousedown',
       handleDragStart

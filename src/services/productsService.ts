@@ -196,10 +196,14 @@ export async function getStoredProductsOrFetch(
   return productsData
 }
 
-export function stripStable(pair) {
+export function stripStablePair(pair) {
   return pair
     .replace(/(\w{3,})BUSD$/i, '$1USD')
-    .replace(/(\w{3})?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
+    .replace(/(\w{3})?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
+}
+
+export function stripStableQuote(quote) {
+  return quote.replace(/[a-z]?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1')
 }
 
 export async function getExchangeSymbols(
@@ -259,7 +263,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
     type = 'perp'
-  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
+  } else if (
+    (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
+    symbol.indexOf('_') !== -1
+  ) {
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'
@@ -325,7 +332,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     }
 
     if (noStable) {
-      localSymbolAlpha = stripStable(base + quote)
+      localSymbolAlpha = stripStablePair(base + quote)
     } else {
       localSymbolAlpha = base + quote
     }
